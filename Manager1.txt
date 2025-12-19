@@ -8,48 +8,42 @@ import java.io.FileWriter;
 import java.io.*;
 import java.util.*;
 
-public class Manager1 {
+public class Manager {
 
     private static List<String> logs = new ArrayList<>();
 
+    private static final int MINOR_AGE = 18;
     private static final int MIN_AGE = 0;
     private static final int MAX_AGE = 130;
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/hospital";
     private static final String REPORT_FILE = "report.txt";
 
+    private static String getRiskLevel(int result) {
+        switch (result) {
+            case 0: return "normal";
+            case 1: return "medium risk";
+            case 2: return "high risk";
+            default: return "unknown";
+        }
+    }
 
-    public void process(Patient1 p) {
+    public int process(Patient patient, int bpSys, int bpDia, boolean printResult) {
+        int result = 0;
 
-        if (p.a < MIN_AGE || p.a > MAX_AGE) {
-            System.out.println("Invalid age!");
-            logs.add("Invalid patient: " + p.n);
+        if (patient.age < MIN_AGE || patient.age > MAX_AGE) {
+            System.out.println("Invalid age");
+            logs.add("Invalid patient: " + patient.name);
             return;
         }
 
-        if (p.a < MIN_AGE) {
+        if (patient.age < MINOR_AGE) {
             System.out.println("Patient is a minor.");
         } else {
             System.out.println("Patient is an adult.");
         }
 
-        logs.add("Processed patient " + p.n);
+        logs.add("Processed patient " + patient.name);
 
-    }
-
-    public int process2(
-            Patient1 p,
-            int bpSys,
-            int bpDia,
-            boolean printResult
-    ) {
-        int result = 0;
-
-        if (p.a < 0 || p.a > 150) {
-            logs.add("Invalid patient age: " + p.a);
-            return -1;
-        }
-
-        if (bpSys > 150 || bpDia > 95) {
+        if (bpSys > 150 && bpDia > 95) {
             result = 2;
         } else if (bpSys > 130) {
             result = 1;
@@ -57,24 +51,33 @@ public class Manager1 {
             result = 0;
         }
 
+        logs.add("Patient " + patient.name + ": " + getRiskLevel(result));
+
         if (printResult) {
-            System.out.println("Patient " + p.n + ": score=" + result);
+            System.out.println("Patient " + patient.name + " with BP (" + bpSys + "/" + bpDia + ") is " + getRiskLevel(result));
         }
 
         return result;
     }
 
+    public void writeReport() {
+        try (FileWriter writer = new FileWriter(REPORT_FILE)) {
+            for (String log : logs) {
+                writer.write(log + "\n");
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing report: " + e.getMessage());
+        }
+    }
 
-}
-
-class Patient1 {
-    public String n;
-    public int a;
+class Patient {
+    public String name;
+    public int age;
     public String existing_condition;
 
-    public Patient1(String name, int age, String condition) {
-        this.n = name;
-        this.a = age;
+    public Patient(String name, int age, String condition) {
+        this.name = name;
+        this.age = age;
         this.existing_condition = condition;
     }
 }
