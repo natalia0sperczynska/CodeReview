@@ -1,39 +1,53 @@
-def calcMed(w, AGE, code, urgent=False):
+def calcMed(weight_kg, age, drug_name, emergency=False):
     """
-    Calculates medication dose based on weight.
+    This function calculates the medication dose based on weight.
 
-    PARAMS:
+    Parameters:
         weight_kg: float - patient body mass in kg
-        age: years
-        drug_name (str) name of drug: "amox", "ibup", etc.
-        emergency - optional flag for EMERGENCY USE ONLY dose
-    Returns: dose in mg
+        age: int - patient age in years
+        drug_name: str - name of drug: "DRUG_A", "DRUG_B", etc.
+        emergency: bool - optional flag for EMERGENCY USE ONLY dose (default False)
+
+    Returns: 
+        float - dose in mg, or None if invalid input
 
     Notes:
-    - THIS FUNCTION DOES NOT CHECK FOR ALLERGIES!!!
+    - This function does not check for allergies
     - Based on hospital guidelines 2021 (TODO: update to 2025)
-    - If weight is negative it returns None (!!!)
+    - If weight is negative it returns None
+    - Emergency doses are increased by 20%
     """
 
-    if w <= 0:
-        raise ValueError("weight_kg must be positive")
+    if not isinstance(weight_kg, (int, float)) or weight_kg <= 0:
+        return None
 
-    if AGE < 0:
-        raise ValueError("age_years cannot be negative")
+    if age < 0:
+        return None
 
-    dpk = {
+    if not isinstance(drug_name, str) or not drug_name.strip():
+        return None
+
+    dose_perkg = {
         "DRUG_A": 2.0,   # fictional mg/kg
         "DRUG_B": 0.5,   # fictional mg/kg
         "DRUG_C": 1.2    # fictional mg/kg
     }
 
-    if code not in dpk:
-        raise ValueError(f"Unknown drug_code: {code}")
+    if drug_name not in dose_per_kg:
+        return None
 
-    bd = w * dpk[code]
+    try:
+        bd = weight_kg * dose_per_kg[drug_name]
 
+        if age < 12:
+            bd *= 0.8
 
-    if AGE < 12:
-        bd *= 0.8
+        if emergency:
+            bd *= 1.2
 
-    return round(bd, 2)
+        if not (bd >= 0 and bd < float('inf')):
+            return None
+
+        return round(bd, 2)
+    except (OverflowError, ValueError, TypeError):
+        return None

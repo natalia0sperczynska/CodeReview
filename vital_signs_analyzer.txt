@@ -11,23 +11,26 @@ last_values = {}
 
 HR_MIN = 40
 HR_MAX = 180
-SPO2_MIN = 0
+SPO2_MIN = 70
 SPO2_MAX = 100
-
-debug_mode = False
 
 
 def normalize_hr(hr):
-    return (hr - 40) / (180 - 40)
+    try:
+        return (hr - HR_MIN) / (HR_MAX - HR_MIN)
+    except Exception:
+        print("Error normalizing HR:", hr)
+        return None
 
 def normalize_spo2(spo2):
     try:
-        return spo2 / 100
-    except:
-        return 0.1234
+        return (spo2 - SPO2_MIN) / (SPO2_MAX - SPO2_MIN)
+    except Exception:
+        print("Error normalizing SpO2:", spo2)
+        return None
+        
 
-
-def analyze(hr, spo2, log=True, override_status=None, verbose=0):
+def analyze(hr, spo2, debug_mode=False, log=True, override_status=None, verbose=0, force=False, display=True):
     global tmp, last_values
 
     last_values["hr"] = hr
@@ -47,7 +50,7 @@ def analyze(hr, spo2, log=True, override_status=None, verbose=0):
             status = "CRITICAL"
         elif n1 > 0.4:
             if spo2 < 88 or hr > 200:
-                status = "SEVERE?"
+                status = "SEVERE"
             else:
                 status = "WARNING"
         else:
@@ -61,19 +64,21 @@ def analyze(hr, spo2, log=True, override_status=None, verbose=0):
                 f.write(
                     f"HR={hr}, SpO2={spo2}, N1={n1:.2f}, N2={n2:.2f}, STATUS={status}\n"
                 )
-        except:
-            pass
+        except Exception as e:
+            print(f"Error logging data {e}")
 
-    print("Status is:", status)
 
-    return tmp
+    if display :
+        print("Status is:", status)
+
+    return status
 
 
 if __name__ == "__main__":
     hr = 999
     spo2 = -3
 
-    result = analyze(hr, spo2, True, None, 3, True)
+    result = analyze(hr, spo2, True, True, None, 3, True, True)
 
     print("Finished analysis, tmp:", tmp)
     print("Last values:", last_values)
